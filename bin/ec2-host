@@ -41,15 +41,15 @@ def ec2_active_instances(label_tag, filters):
         for instance in reservation.instances:
             instance_name = instance.tags.get(label_tag)
             if instance.public_dns_name:
-                pair = (instance_name, instance.public_dns_name)
+                pair = (instance_name, instance.public_dns_name, instance.private_ip_address)
                 instances.append(pair)
     return instances
 
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, "hLk:s:r:t:",
-                                         ["help", "aws-key=", "aws-secret=", "region=", "tag="])
+        opts, args = getopt.getopt(argv, "hLk:s:r:t:i",
+                                         ["help", "aws-key=", "aws-secret=", "region=", "tag=", "internal-ip"])
     except getopt.GetoptError, err:
         print >>sys.stderr, err
         short_usage()
@@ -59,6 +59,7 @@ def main(argv):
     aws_secret = os.environ.get("AWS_SECRET_ACCESS_KEY")
     region = os.environ.get("AWS_EC2_REGION")
     tag = "Name"
+    internal_ip = False 
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
@@ -72,6 +73,8 @@ def main(argv):
             region = arg
         elif opt in ("-t", "--tag"):
             tag = arg
+	elif opt in ("-i", "--internal-ip"):
+	    internal_ip = True 
 
     if not aws_key or not aws_secret:
         if not aws_key:
@@ -107,10 +110,12 @@ def main(argv):
     instances = ec2_active_instances(tag, filters)
 
     numinstances = len(instances)
-
-    if numinstances == 1:
+    if numinstances == 1 and internal_ip == True:
+        print instances[0][2] # internal-ip
+        sys.exit(0)
+        return
+    elif numinstances == 1 and internal_ip == False:
         print instances[0][1]  # [1] = dns
-
         sys.exit(0)
         return
     elif numinstances == 0 or numinstances > 1:

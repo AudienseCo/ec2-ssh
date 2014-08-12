@@ -81,4 +81,14 @@ cmd="echo \\\". ~/.bashrc && PS1='\[\e]0;$inst: \w\\\a\]\[\\\033[01;32m\]$inst\[
 if test "${@:2}"; then
     cmd="${@:2}"
 fi
-test -n "$host" && echo "Connecting to $user@$host." && exec sh -c "ssh -t $user@$host \"$cmd\""
+if [ `echo $host|wc -l` -gt 1 ]; then
+	echo "There's more than 2 hosts with that name..."
+	IFS=$'\n'; 
+	cssh_cmd="cssh "
+	for h in $host; do
+		cssh_cmd="$cssh_cmd $user@$h"
+	done
+	exec sh -c "$cssh_cmd"
+else
+	test -n "$host" && echo "Connecting to $user@$host." && exec sh -c "ssh -t $user@$host \"$cmd\""
+fi

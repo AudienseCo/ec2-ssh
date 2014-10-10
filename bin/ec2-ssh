@@ -24,7 +24,7 @@ test $# -eq 0 && { usage; exit; }
 use_internal_ip=false
 
 # Process options
-cmd="/home/isart/apps/ec2-ssh/ec2-ssh/bin/ec2-host"
+cmd="ec2-host"
 while getopts ":hk:s:r:t:i" opt; do
     case $opt in
         h  ) usage; exit 1;;

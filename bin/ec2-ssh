@@ -21,9 +21,10 @@ EOF
 
 # Print usage message and exit if no arguments are given
 test $# -eq 0 && { usage; exit; }
+use_internal_ip=false
 
 # Process options
-cmd="ec2-host"
+cmd="/home/isart/apps/ec2-ssh/ec2-ssh/bin/ec2-host"
 while getopts ":hk:s:r:t:i" opt; do
     case $opt in
         h  ) usage; exit 1;;
@@ -31,7 +32,7 @@ while getopts ":hk:s:r:t:i" opt; do
         s  ) cmd="$cmd -s $OPTARG";;
         r  ) cmd="$cmd -r $OPTARG";;
         t  ) cmd="$cmd -t $OPTARG";;
-        i  ) cmd="$cmd --internal-ip";;
+        i  ) use_internal_ip=true;;
         \? ) usage; exit 1
     esac
 done
@@ -50,24 +51,33 @@ fi
 
 # support tag:value format for identifying instances
 IFS=":"; declare -a tagparts=($inst)
-
 tag="${tagparts[0]}"
 value="${tagparts[1]}"
 
+IFS=" "
+regions="us-east-1 eu-west-1 sa-east-1"
 
-region="us-east-1"
-echo "Checking region $region"
+for r in $regions; do
+	echo "Checking region $r"
+	host=$(eval "$cmd -r $r $inst")
+	if [ "$host" != "" ]; then
+		break
+	fi
+done
 
-# get host from ec2-host command
-#echo $cmd -r $region $inst $host
-host=$(eval "$cmd -r $region $inst")
 
-if [ "$host" == "" ]; then
-	region="eu-west-1"
-	echo "Checking region $region"
-	#echo $cmd -r $region $inst $host
-	host=$(eval "$cmd -r $region $inst")
-fi
+#region="us-east-1"
+#echo "Checking region $region"
+#
+## get host from ec2-host command
+#host=$(eval "$cmd -r $region $inst")
+#
+#if [ "$host" == "" ]; then
+#	region="eu-west-1"
+#	echo "Checking region $region"
+#	#echo $cmd -r $region $inst $host
+#	host=$(eval "$cmd -r $region $inst")
+#fi
 
 if [ -z "$value" ]; then
     value="$inst"
@@ -81,14 +91,30 @@ cmd="echo \\\". ~/.bashrc && PS1='\[\e]0;$inst: \w\\\a\]\[\\\033[01;32m\]$inst\[
 if test "${@:2}"; then
     cmd="${@:2}"
 fi
+
 if [ `echo $host|wc -l` -gt 1 ]; then
-	echo "There's more than 2 hosts with that name..."
+	echo "There's more than 1 host with that name..."
 	IFS=$'\n'; 
 	cssh_cmd="cssh "
-	for h in $host; do
-		cssh_cmd="$cssh_cmd $user@$h"
-	done
+	for h_line in $host; do
+		IFS=" "; 
+		declare -a h=($h_line)
+		if [ $use_internal_ip == true ]; then 
+			h_name=${h[2]}
+		else
+			h_name=${h[1]}
+		fi	
+		cssh_cmd="$cssh_cmd $user@$h_name"
+	done	
 	exec sh -c "$cssh_cmd"
 else
-	test -n "$host" && echo "Connecting to $user@$host." && exec sh -c "ssh -t $user@$host \"$cmd\""
+	IFS=" "; 
+	declare -a h=($host)
+	if [ $use_internal_ip == true ]; then 
+		h_name=${h[2]}
+	else
+		h_name=${h[1]}
+	fi	
+
+	test -n "$host" && echo "Connecting to $user@$h_name" && exec sh -c "ssh -t $user@$h_name \"$cmd\""
 fi

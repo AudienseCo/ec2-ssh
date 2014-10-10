@@ -48,8 +48,8 @@ def ec2_active_instances(label_tag, filters):
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(argv, "hLk:s:r:t:i",
-                                         ["help", "aws-key=", "aws-secret=", "region=", "tag=", "internal-ip"])
+        opts, args = getopt.getopt(argv, "hLk:s:r:t:",
+                                         ["help", "aws-key=", "aws-secret=", "region=", "tag="])
     except getopt.GetoptError, err:
         print >>sys.stderr, err
         short_usage()
@@ -59,7 +59,6 @@ def main(argv):
     aws_secret = os.environ.get("AWS_SECRET_ACCESS_KEY")
     region = os.environ.get("AWS_EC2_REGION")
     tag = "Name"
-    internal_ip = False 
 
     for opt, arg in opts:
         if opt in ("-h", "--help"):
@@ -73,8 +72,6 @@ def main(argv):
             region = arg
         elif opt in ("-t", "--tag"):
             tag = arg
-	elif opt in ("-i", "--internal-ip"):
-	    internal_ip = True 
 
     if not aws_key or not aws_secret:
         if not aws_key:
@@ -104,31 +101,27 @@ def main(argv):
         filters['tag:%s' % tag] = args[0]
     elif argc > 1:
         print >>stderr, "Warning: more than one name given"
+        print >>stderr, "{}".format(argv)
         sys.exit(1)
         return
 
     instances = ec2_active_instances(tag, filters)
 
     numinstances = len(instances)
-    if numinstances == 1 and internal_ip == True:
-        print instances[0][2] # internal-ip
-        sys.exit(0)
-        return
-    elif numinstances == 1 and internal_ip == False:
-        print instances[0][1]  # [1] = dns
+    if numinstances == 1:
+        print "{} {} {}".format(instances[0][0], instances[0][1], instances[0][2])
         sys.exit(0)
         return
     elif numinstances > 1:
         for pair in sorted(instances, key=lambda p: p[0]):
-            print "{}".format(pair[2])
-
+            print "{} {} {}".format(pair[0], pair[1], pair[2])
         sys.exit(0)
         return
     else:
         print >>stderr, 'Unable to match "%s"' % args[0]
-        short_usage()
+    #    short_usage()
 
-        sys.exit(1)
+        sys.exit(0)
         return
 
 if __name__ == "__main__":

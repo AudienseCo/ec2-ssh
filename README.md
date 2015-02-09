@@ -14,7 +14,7 @@ It now supports:
 ```
 git clone https://github.com/SocialBro/ec2-ssh
 sudo python setup.py install
-sudo apt-get install cssh #(Required if you want to stablish multiple connections)
+sudo apt-get install clusterssh #(Required if you want to stablish multiple connections)
 
 ```
 

@@ -4,7 +4,7 @@ set -e
 
 usage() {
     cat<<EOF
-Usage: ec2-ssh [-k KEY] [-s SECRET] [-r REGION] [-t TAG] [-i] <instance-name>
+Usage: ec2-ssh [-k KEY] [-s SECRET] [-r REGION] [-t TAG] [-i] [-g gateway-host] <instance-name>
 
 Open an ssh connection to an EC2 instance where <instance-name>=tag:value.
 The 'tag:' portion of <instance-name> is optional, and defaults to 'Name'.
@@ -16,27 +16,30 @@ For a list of instances, run ec2-host without any paramteres
   -r, REGION    Amazon EC2 Region, defaults to us-east-1
   -t, TAG       Tag name for searching, defaults to 'Name'
   -i, internal-ip We want to get the internal ip address
+  -g gateway-host This host will be used as SSH gateway to connect to internal servers
 EOF
 }
 
 # Print usage message and exit if no arguments are given
 test $# -eq 0 && { usage; exit; }
 use_internal_ip=false
+gateway_host=false
+gateway_command=""
 
 # Process options
 cmd="ec2-host"
-while getopts ":hk:s:r:t:i" opt; do
+while getopts ":hk:s:r:t:g:i" opt; do
     case $opt in
         h  ) usage; exit 1;;
         k  ) cmd="$cmd -k $OPTARG";;
         s  ) cmd="$cmd -s $OPTARG";;
         r  ) cmd="$cmd -r $OPTARG";;
         t  ) cmd="$cmd -t $OPTARG";;
+        g  ) gateway_host=$OPTARG;;
         i  ) use_internal_ip=true;;
         \? ) usage; exit 1
     esac
 done
-
 shift $((OPTIND - 1))
 
 # support user@instance-name format
@@ -49,13 +52,19 @@ if [ -z "$inst" ]; then
   user="ubuntu"
 fi
 
+if [ "$gateway_host"="false" ]; then
+  proxy_command="ProxyCommand ssh $user@$gateway_host exec nc %h %p"
+  gateway_command="-o '$proxy_command'"  
+fi
+
+
 # support tag:value format for identifying instances
 IFS=":"; declare -a tagparts=($inst)
 tag="${tagparts[0]}"
 value="${tagparts[1]}"
 
 IFS=" "
-regions="us-east-1 eu-west-1 sa-east-1"
+regions="us-east-1 eu-west-1 sa-east-1 ap-southeast-1"
 
 for r in $regions; do
 	echo "Checking region $r"
@@ -64,20 +73,6 @@ for r in $regions; do
 		break
 	fi
 done
-
-
-#region="us-east-1"
-#echo "Checking region $region"
-#
-## get host from ec2-host command
-#host=$(eval "$cmd -r $region $inst")
-#
-#if [ "$host" == "" ]; then
-#	region="eu-west-1"
-#	echo "Checking region $region"
-#	#echo $cmd -r $region $inst $host
-#	host=$(eval "$cmd -r $region $inst")
-#fi
 
 if [ -z "$value" ]; then
     value="$inst"
@@ -94,8 +89,15 @@ fi
 
 if [ `echo $host|wc -l` -gt 1 ]; then
 	echo "There's more than 1 host with that name..."
+	cssh_options=""
+	if [ "$gateway_host"="false" ]; then
+		echo "creating tmp config file"
+		cat ~/.ssh/config>/tmp/cssh_config_gateway
+		echo $proxy_command>>/tmp/cssh_config_gateway
+		cssh_options=" -o '-F /tmp/cssh_config_gateway'"
+	fi
 	IFS=$'\n'; 
-	cssh_cmd="cssh "
+	cssh_cmd="cssh $cssh_options "
 	for h_line in $host; do
 		IFS=" "; 
 		declare -a h=($h_line)
@@ -105,7 +107,7 @@ if [ `echo $host|wc -l` -gt 1 ]; then
 			h_name=${h[1]}
 		fi	
 		cssh_cmd="$cssh_cmd $user@$h_name"
-	done	
+	done
 	exec sh -c "$cssh_cmd"
 else
 	IFS=" "; 
@@ -116,5 +118,5 @@ else
 		h_name=${h[1]}
 	fi	
 
-	test -n "$host" && echo "Connecting to $user@$h_name" && exec sh -c "ssh -t $user@$h_name \"$cmd\""
+	test -n "$host" && echo "Connecting to $user@$h_name" && exec sh -c "ssh $gateway_command -t $user@$h_name \"$cmd\""
 fi

@@ -53,10 +53,37 @@ There's more than 1 host with that name...
 Opening to: ubuntu@10.XXX.YYY.ZZ1 ubuntu@10.XXX.YYY.ZZ2 ubuntu@10.XXX.YYY.ZZ3
 ```
 
+
+
 #### Connec to the public address of a group of instances that have the same tag name (i.e. Instances that belong to an Auto Scaling Group)
 ```
 $ ec2-ssh my-as-group
 Checking region us-east-1
 There's more than 1 host with that name...
 Opening to: ubuntu@54.XXX.YYY.ZZ1.compute-1.amazonaws.com ubuntu@54.XXX.YYY.ZZ2.compute-1.amazonaws.com ubuntu@54.XXX.YYY.ZZ3.compute-1.amazonaws.com
+```
+
+#### Connect to a server that's inside a network without external access trough a gateway host.
+```
+$ec2-ssh -i -g gateway02.yourdomain.com my-as-group
+Checking region us-east-1
+There's more than 1 host with that name...
+creating tmp config file
+Opening to: ubuntu@10.0.0.175 ubuntu@10.0.1.129 ubuntu@10.0.1.213
+```
+That will create a connection to gateway02 and then a connection to each of the servers. Now you can leave port 22 open only for gateway hosts. It should also connect to VPC hosts
+
+
+
+## That could save you some typing...
+On your ~/.bashrc add the following alias (modify acording your setup)
+```
+alias c='ec2-ssh -i'
+alias cg='ec2-ssh -i -g gateway01.yourdomain.com'
+alias cs='ec2-ssh -i -g gateway02.yourdomain.com'
+alias ci='ec2-ssh'
+```
+and now, the following command will create an SSH connection to ALL hosts with tag_name=my-as-group trough a gateway on gateway01.yourdomain.com
+```
+cg my-as-group
 ```

@@ -52,7 +52,7 @@ if [ -z "$inst" ]; then
   user="ubuntu"
 fi
 
-if [ "$gateway_host"="false" ]; then
+if [ "$gateway_host" != "false" ]; then
   proxy_command="ProxyCommand ssh $user@$gateway_host exec nc %h %p"
   gateway_command="-o '$proxy_command'"  
 fi
@@ -117,6 +117,5 @@ else
 	else
 		h_name=${h[1]}
 	fi	
-
 	test -n "$host" && echo "Connecting to $user@$h_name" && exec sh -c "ssh $gateway_command -t $user@$h_name \"$cmd\""
 fi

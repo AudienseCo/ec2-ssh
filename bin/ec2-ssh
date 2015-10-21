@@ -54,7 +54,8 @@ fi
 
 if [ "$gateway_host" != "false" ]; then
   proxy_command="ProxyCommand ssh $user@$gateway_host exec nc %h %p"
-  gateway_command="-o '$proxy_command'"  
+  #gateway_command="-o '$proxy_command'"  
+  gateway_command="ssh $user@$gateway_host -t "
 fi
 
 
@@ -90,7 +91,7 @@ fi
 if [ `echo $host|wc -l` -gt 1 ]; then
 	echo "There's more than 1 host with that name..."
 	cssh_options=""
-	if [ "$gateway_host"="false" ]; then
+	if [ "$gateway_host" != "false" ]; then
 		echo "creating tmp config file"
 		cat ~/.ssh/config>/tmp/cssh_config_gateway
 		echo $proxy_command>>/tmp/cssh_config_gateway
@@ -117,5 +118,6 @@ else
 	else
 		h_name=${h[1]}
 	fi	
-	test -n "$host" && echo "Connecting to $user@$h_name" && exec sh -c "ssh $gateway_command -t $user@$h_name \"$cmd\""
+	echo "ssh $gateway_command -t $user@$h_name \"$cmd\""
+	test -n "$host" && echo "Connecting to $user@$h_name" && exec sh -c "$gateway_command ssh $user@$h_name \"$cmd\""
 fi

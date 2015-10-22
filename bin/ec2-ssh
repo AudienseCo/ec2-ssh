@@ -117,7 +117,14 @@ else
 		h_name=${h[2]}
 	else
 		h_name=${h[1]}
-	fi	
-	echo "ssh $gateway_command -t $user@$h_name \"$cmd\""
-	test -n "$host" && echo "Connecting to $user@$h_name" && exec sh -c "$gateway_command ssh $user@$h_name \"$cmd\""
+	fi
+	gateway_command_extra=""
+	if [ "$gateway_command" == "" ]; then
+		gateway_command_extra="-t"
+	fi
+
+	c="$gateway_command ssh $gateway_command_extra $user@$h_name \"$cmd\""
+
+#	echo "$c"
+	test -n "$host" && echo "Connecting to $user@$h_name" && exec sh -c "$c"
 fi

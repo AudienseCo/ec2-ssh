@@ -121,6 +121,8 @@ else
 	gateway_command_extra=""
 	if [ "$gateway_command" == "" ]; then
 		gateway_command_extra="-t"
+	else
+		cmd=""
 	fi
 
 	c="$gateway_command ssh $gateway_command_extra $user@$h_name \"$cmd\""

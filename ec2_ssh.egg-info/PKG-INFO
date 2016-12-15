@@ -1,4 +1,4 @@
-Metadata-Version: 1.0
+Metadata-Version: 1.1
 Name: ec2-ssh
 Version: 1.2.1
 Summary: SSH into EC2 instances via tag name

@@ -49,13 +49,12 @@ user="${hostparts[0]}"
 
 if [ -z "$inst" ]; then
   inst="$1"
-  user="ubuntu"
 fi
 
 if [ "$gateway_host" != "false" ]; then
-  proxy_command="ProxyCommand ssh $user@$gateway_host exec nc %h %p"
+  proxy_command="ProxyCommand ssh $gateway_host exec nc %h %p"
   #gateway_command="-o '$proxy_command'"  
-  gateway_command="ssh $user@$gateway_host -t "
+  gateway_command="ssh $gateway_host -t "
 fi
 
 
@@ -107,7 +106,7 @@ if [ `echo $host|wc -l` -gt 1 ]; then
 		else
 			h_name=${h[1]}
 		fi	
-		cssh_cmd="$cssh_cmd $user@$h_name"
+		cssh_cmd="$cssh_cmd $h_name"
 	done
 	exec sh -c "$cssh_cmd"
 else
@@ -125,8 +124,8 @@ else
 		cmd=""
 	fi
 
-	c="$gateway_command ssh $gateway_command_extra $user@$h_name \"$cmd\""
+	c="$gateway_command ssh $gateway_command_extra $h_name \"$cmd\""
 
 #	echo "$c"
-	test -n "$host" && echo "Connecting to $user@$h_name" && exec sh -c "$c"
+	test -n "$host" && echo "Connecting to $h_name" && exec sh -c "$c"
 fi

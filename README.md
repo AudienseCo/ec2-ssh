@@ -87,12 +87,18 @@ That will create a connection to gateway02 and then a connection to each of the 
 
 
 ## That could save you some typing...
-On your ~/.bashrc add the following alias (modify acording your setup)
+
+1. On your ~/.bashrc (in MACOS ~/.bash_profile) add the following alias (modify acording your setup)
 ```
 alias c='ec2-ssh -i'
 alias cg='ec2-ssh -i -g gateway01.yourdomain.com'
 alias cs='ec2-ssh -i -g gateway02.yourdomain.com'
 alias ci='ec2-ssh'
+```
+2. Put your credentials AWS_ACCESS_KEY and AWS_SECRET_KEY as session-wide environment variables for you user on ~/.bashrc (in MACOS ~/.bash_profile)
+```
+export AWS_ACCESS_KEY=XXXXXXXXXXXXXXXXXX
+export AWS_SECRET_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 and now, the following command will create an SSH connection to ALL hosts with tag_name=my-as-group trough a gateway on gateway01.yourdomain.com
 ```

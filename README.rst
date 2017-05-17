@@ -12,7 +12,7 @@ ec2-ssh
 A pair of command line utilities for finding and SSH-ing into your Amazon EC2
 instances by tag (such as 'Name').
 
-Forked from Instagram original code by YPlan.
+Forked from YPlan https://github.com/YPlan/ec2-ssh/
 
 Installation
 ------------

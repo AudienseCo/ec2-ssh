@@ -96,7 +96,10 @@ def host():
 def get_dns_names(tag, value, dns_type):
     conn = boto3.client('ec2')
 
-    filters = []
+    filters = [{
+        'Name': 'instance-state-name',
+        'Values': ['running']
+    }]
     if value:
         filters.append({
             'Name': 'tag:' + tag,

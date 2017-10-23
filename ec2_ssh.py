@@ -82,15 +82,24 @@ def ec2_host_parser():
                         default=os.getenv('EC2_SSH_INTERNAL_IP', False),
                         help="Select the internal DNS instead of the public "
                              "one")
+    parser.add_argument('-l', '--show-tag-value', action='store_true',
+                        default=os.getenv('EC2_SHOW_TAG_VALUE', False),
+                        help='Shows the tag value next to the DNS')
     return parser
 
 
 def host():
     args = ec2_host_parser().parse_args()
-    instances = get_dns_names(args.tag, args.value, get_dns_tag(args.internal))
-    random.shuffle(instances)
-    for instance in instances:
-        print(instance)
+    if args.show_tag_value:
+        instances = get_dns_names_with_tag(args.tag, args.value, get_dns_tag(args.internal))
+        random.shuffle(instances)
+        for instance in instances:
+            print("{DNS} {Tag}".format(**instance))
+    else:
+        instances = get_dns_names(args.tag, args.value, get_dns_tag(args.internal))
+        random.shuffle(instances)
+        for instance in instances:
+            print(instance)
 
 
 def get_dns_names(tag, value, dns_type):
@@ -113,6 +122,31 @@ def get_dns_names(tag, value, dns_type):
         for instance in reservation['Instances']:
             if instance[dns_type]:
                 dns_names.append(instance[dns_type])
+    return dns_names
+
+
+def get_dns_names_with_tag(tag, value, dns_type):
+    conn = boto3.client('ec2')
+
+    filters = [{
+        'Name': 'instance-state-name',
+        'Values': ['running']
+    }]
+    if value:
+        filters.append({
+            'Name': 'tag:' + tag,
+            'Values': [value]
+        })
+
+    data = conn.describe_instances(Filters=filters)
+
+    dns_names = []
+    for reservation in data['Reservations']:
+        for instance in reservation['Instances']:
+            if instance[dns_type]:
+                for instance_tag in instance["Tags"]:
+                    if instance_tag["Key"] == tag:
+                        dns_names.append({'DNS': instance[dns_type], 'Tag': instance_tag["Value"]})
     return dns_names
 
 

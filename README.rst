@@ -60,3 +60,10 @@ profile.
    export EC2_SSH_USER=$USER
    export EC2_HOST_TAG='Name'
    export EC2_SSH_INTERNAL_IP=True
+
+To show the EC2_HOST_TAG value next to the IP when running ec2-host, put this
+env var in your shell profile.
+
+.. code-block:: bash
+
+   export EC2_SHOW_TAG_VALUE=True

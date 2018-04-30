@@ -14,7 +14,7 @@ From pip:
 
 .. code-block:: bash
 
-    pip install ec2-ssh
+    sudo -H pip install git+https://github.com/AudienseCo/ec2-ssh.git --ignore-installed six
 
 Usage
 -----

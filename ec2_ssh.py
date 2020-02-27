@@ -58,7 +58,7 @@ def main():
 
 
 def get_dns_tag(is_internal):
-    return 'PrivateIpAddress' if is_internal else 'PublicAddressName'
+    return 'PrivateIpAddress' if is_internal else 'PublicIpAddress'
 
 
 def get_host_name(tag, value, dns_type):
